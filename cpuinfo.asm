@@ -34,8 +34,22 @@ main:
     push    str_can_set
     call    printf
 
-    ;check arg1 for flags
-    mov     ebx,    DWORD[ebp+0x8]
+.get_max_cpuid:
+    xor     eax,    eax
+    push    eax
+    call    CPUId
+    xor     ecx,    ecx
+
+    .loop:
+        cmp     ecx,    eax
+        jz      .endloop
+        push    ecx
+        and     ecx,    DWORD[ebp+0x8]
+        cmp     ecx,    DWORD[esp]
+        jz      .label+offset ;;NOTE
+        jmp     .loop
+
+    .endloop:
 
     ;first get the max eax value 
     ;set ecx to that value
@@ -80,10 +94,10 @@ CPUId:
 PrintVendorString:
     push    ebp
     mov     ebp,    esp
- 
+
     push    0x0
     call    CPUId
-    
+
     sub     esp,    24
     mov     DWORD[esp+0x4],     ebx
     mov     DWORD[esp+0x8],     edx

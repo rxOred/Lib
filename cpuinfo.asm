@@ -7,10 +7,10 @@
 extern printf
 
 section .data
-str_too_few_args    db  "[!] Too few args. Usage ./cpuid <arg1>", 0xa. 0x0
+str_too_few_args    db  "[!] Too few args. Usage ./cpuid <arg1>", 0xa, 0x0
 str_cannot_set      db  "[!] CPUID instruction is not allowed on this processor", 0xa, 0x0
 str_can_set         db  "[!] CPUID instruction is allowed on this processor", 0xa, 0x0
-vendor_info     db  "[!] Vendor information:", 0xa, 0x9, "vendor string: %s", 0x9, "max CPUID value: 0x%x", 0x9, 0xa
+vendor_string       db  "[!] Vendor information:", 0xa, 0x9, "vendor string: %s", 0x9, "max CPUID value: 0x%x", 0x9, 0xa
 
 section .bss
 
@@ -30,7 +30,7 @@ main:
     call    CheckCPUId
     add     esp,    0x4
     cmp     eax,    0x1
-    jz      .flag_cannot_set:
+    jz      .flag_cannot_set
     push    str_can_set
     call    printf
 
@@ -46,11 +46,12 @@ main:
         push    ecx
         and     ecx,    DWORD[ebp+0x8]
         cmp     ecx,    DWORD[esp]
-        jz      .label+offset ;;NOTE
+        call    PrintVendorString       ;replace with jump table index
         jmp     .loop
 
     .endloop:
-
+        jmp     .return
+ 
     ;first get the max eax value 
     ;set ecx to that value
     ;loop through each
@@ -63,7 +64,7 @@ main:
             ;else
                 ;continue
 
-    jmp     .return
+   jmp     .return
 
 .few_args:
     push    str_too_few_args
@@ -71,7 +72,7 @@ main:
     add     esp,    0x4
     jmp     .return
 
-.flag_not_set:
+.flag_cannot_set:
     push    str_cannot_set
     call    printf
     add     esp,    0x4
@@ -108,12 +109,25 @@ PrintVendorString:
     mov     DWORD[esp],     eax         ;max cpuid
     lea     eax,    DWORD[esp+0x4]
     push    eax
-    push    vendor_info
+    push    vendor_string
     call    printf
 
     jmp     .return
 
 .return:
+    mov     esp,    ebp
+    pop     ebp
+    ret
+
+PrintVersionInfomaion:
+    push    ebp
+    mov     ebp,    esp
+
+    push    0x1
+    call    CPUId
+
+    
+
     mov     esp,    ebp
     pop     ebp
     ret

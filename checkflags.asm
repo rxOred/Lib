@@ -5,10 +5,10 @@ CheckCPUId:
 
     pushfd                              ;pushing eflags to the stack
     mov     edx,    DWORD[esp]
-    mov     ebx,    DWORD[ebp+0x8]
+    mov     ebx,    DWORD[ebp+0x8]      ;arg1
     and     edx,    ebx
     cmp     edx,    ebx
-    push    ebx,
+    push    ebx
     jne     .set_flag                   ;if id == 0, try setting the flag
 
 .clear_flag:
@@ -38,8 +38,8 @@ ClearFlag:
 
     pushfd
     mov     esi,    DWORD[esp]
-    ;get this bit mask by negating ebp+0x8
-    and     esi,    0xFFDFFFFF
+    not     DWORD[esp+0x8]
+    and     esi,    DWORD[esp+0x8]
     mov     DWORD[esp],     esi
     popfd
 

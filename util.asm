@@ -31,9 +31,16 @@ atoi:   push    ebp
         sub     bl,     48
         add     eax,    ebx
         mov     ebx,    10
+        mul     ebx
+        inc     ecx
+        jmp     .loop
 
+.end:   cmp     ecx,    0
+        je      .return
+        mov     ebx,    10
+        div     ebx
 
-        pop     esi
+.return:pop     esi
         pop     edi
         mov     esp,    ebp
         pop     ebp

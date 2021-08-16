@@ -4,6 +4,7 @@
 
 %include "checkflags.asm"
 
+extern atoi
 extern printf
 
 section .data
@@ -13,7 +14,6 @@ str_can_set         db  "[!] CPUID instruction is allowed on this processor", 0x
 vendor_string       db  "[!] Vendor information:", 0xa, 0x9, "vendor string: %s", 0x9, "max CPUID value: 0x%x", 0x9, 0xa
 
 section .rodata:
-Jmptab
 
 section .text
 
@@ -26,7 +26,9 @@ main:
     cmp     DWORD[ebp+0x8], 2
     jb     .few_args
     ;converting argv[1] to a string
-    push    DWORD[ebp+0xC]
+    mov     eax,    DWORD[ebp+0xC]
+    add     eax,    4
+    push    eax
     call    atoi
     mov     esi,    eax
 
@@ -51,7 +53,8 @@ main:
         push    ecx
         and     ecx,    esi
         cmp     ecx,    DWORD[esp]
-        jz      ;somewhere
+        jne     .incr
+        jmp     DWORD[.jmptab + ecx] 
         .incr:
             pop     ecx
             inc     ecx
@@ -64,8 +67,9 @@ main:
         call    PrintVendorString
         jmp     .incr
     .A02:
+        call    PrintVersionInfomaion
         jmp     .incr
-    .A03
+    .A03:
         jmp     .incr
     .A04:
         jmp     .incr
@@ -86,7 +90,8 @@ main:
     .A12:
         jmp     .incr
 
-    .jmptab: dd  .A01, .A02, .A03, .A04:.A05, .A06, .A07, .A08, .A09, .A10, .A11, .A12
+    .jmptab: 
+        dd  .A01, .A02, .A03, .A04, .A05, .A06, .A07, .A08, .A09, .A10, .A11, .A12
 
     jmp     .return
 
@@ -150,7 +155,8 @@ PrintVersionInfomaion:
     push    0x1
     call    CPUId
 
-    
+    push    str_can_set
+    call    printf 
 
     mov     esp,    ebp
     pop     ebp

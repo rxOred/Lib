@@ -3,8 +3,9 @@
 ;gcc -m32  cpuinfo.o -o cpuinfo
 
 %include "checkflags.asm"
+%include "util.asm"
 
-extern atoi
+;extern atoi
 extern printf
 
 section .data
@@ -19,36 +20,33 @@ section .text
 
     global main
 
-main:
-    push    ebp
-    mov     ebp,    esp
+main:   push    ebp
+        mov     ebp,    esp
 
-    cmp     DWORD[ebp+0x8], 2
-    jb     .few_args
-    ;converting argv[1] to a string
-    mov     eax,    DWORD[ebp+0xC]
-    add     eax,    4
-    push    eax
-    call    atoi
-    mov     esi,    eax
+        cmp     DWORD[ebp+0x8], 2
+        jb     .few_args
+        ;converting argv[1] to a string
+        mov     eax,    DWORD[ebp+0xC]
+        add     eax,    4
+        push    eax
+        call    atoi
+        mov     esi,    eax
 
-    ;checking if ID bit is accassible
-    push    0x00200000
-    call    CheckCPUId
-    add     esp,    0x4
-    cmp     eax,    0x1
-    jz      .flag_cannot_set
-    push    str_can_set
-    call    printf
+        ;checking if ID bit is accassible
+        push    0x00200000
+        call    CheckCPUId
+        add     esp,    0x4
+        cmp     eax,    0x1
+        jz      .flag_cannot_set
+        push    str_can_set
+        call    printf
 
-.get_max_cpuid:
-    xor     eax,    eax
-    push    eax
-    call    CPUId
-    xor     ecx,    ecx
+.max_cpuid:    xor     eax,    eax
+        push    eax
+        call    CPUId
+        xor     ecx,    ecx
 
-    .loop:
-        cmp     ecx,    eax
+.loop:  cmp     ecx,    eax
         jz      .endloop
         push    ecx
         and     ecx,    esi
@@ -56,20 +54,18 @@ main:
         jne     .incr
         jmp     DWORD[.jmptab + ecx] 
         .incr:
-            pop     ecx
+        pop     ecx
             inc     ecx
             jmp     .loop
 
-    .endloop:
-        jmp     .return
+.endloop:jmp     .return
 
-    .A01:
-        call    PrintVendorString
+.A01:        call    PrintVendorString
         jmp     .incr
-    .A02:
-        call    PrintVersionInfomaion
-        jmp     .incr
-    .A03:
+.A02:        call    PrintVersionInfomaion
+   jmp     .incr
+
+.A03:
         jmp     .incr
     .A04:
         jmp     .incr

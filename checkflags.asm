@@ -67,10 +67,14 @@ SetFlag:    push    ebp
             pushfd
             mov     edi,    DWORD[esp]
             cmp     edi,    esi
-            ;check if recently poped value of 
-            ;eflags register is equal to the
-            ;value of eflags with id flag set
-            ;if so, we are done
+
+            ;-----------------------------------;
+            ;check if recently poped value of   ;
+            ;eflags register is equal to the    ;
+            ;value of eflags with id flag set   ;
+            ;if so, we are done                 ;
+            ;-----------------------------------;
+
             jnz     .failed
             xor     eax,    eax
             jmp     .return

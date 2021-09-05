@@ -9,12 +9,12 @@
 extern printf
 
 section .data
+
 str_too_few_args    db  "[!] Too few args. Usage ./cpuid <arg1>", 0xa, 0x0
 str_cannot_set      db  "[!] CPUID instruction is not allowed on this processor", 0xa, 0x0
 str_can_set         db  "[!] CPUID instruction is allowed on this processor", 0xa, 0x0
 vendor_string       db  "[!] Vendor information:", 0xa, 0x9, "vendor string: %s", 0x9, "max CPUID value: 0x%x", 0x9, 0xa
-
-section .rodata:
+above_max_value     db  "[!] Input value is above the maximum value that can be passed to cpuid instruction", 0xa, 0x0
 
 section .text
 
@@ -39,16 +39,17 @@ main:           push    ebp
                 push    eax
                 call    atoi
                 add     esp,    0x4
-                mov     esi,    eax                 ;atoi(argv[1])
+                mov     esi,    eax                 ;esi = atoi(argv[1])
+                cmp     esi,    0x1f
+                jle     .loop_init      
 
-.max_cpuid:     xor     eax,    eax
-                push    eax
-                call    CPUId
-                add     esp,    0x4
+.above_max:     push    above_max_value
+                call    printf
+                jmp     .return
 
-                xor     ecx,    ecx
-.loop:          cmp     ecx,    esi
-                jz      .endloop
+.loop_init:     xor     ecx,    ecx
+.loop:          cmp     ecx,    0x1f     
+                jg      .endloop
                 push    ecx
                 and     ecx,    esi                 ;(ecx & atoi(argv[1])) ?
                 cmp     ecx,    DWORD[esp]
@@ -59,60 +60,56 @@ main:           push    ebp
                 ;try to implement a jump table ;
                 ;to handle argv[1]             ;
                 ;------------------------------;
+                cmp     DWORD[esp],     0x0
+                call    PrintVendorString
+                jmp     .incr
+
                 cmp     DWORD[esp],     0x1
-                jz      .c1
+                call    PrintVersionInfomaion
+                jmp     .incr    
+                
                 cmp     DWORD[esp],     0x2
-                jz      .c2
+                call    PrintCacheTLBInformation
+                jmp     .incr
+
                 cmp     DWORD[esp],     0x3
-                jz      .c3
-                cmp     DWORD[esp],     0x4
-                jz      .c4
+                call    PrintProcessorSerial
+                jmp     .incr
+
                 cmp     DWORD[esp],     0x5
-                jz      .c5
+                call    PrintMONITOR
+                jmp     .incr
+
                 cmp     DWORD[esp],     0x6
-                jz      .c6
-                cmp     DWORD[esp],     0x7
-                jz      .c7
-                cmp     DWORD[esp],     0x8
-                jz      .c8
+                call    PrintThermalAndPowerInfomation
+                jmp     .incr
+               
                 cmp     DWORD[esp],     0x9
-                jz      .c9
+                call    PrintDirectCacheAccessInformation
+                jmp     .incr
+
                 cmp     DWORD[esp],     0xa
-                jz      .c10
+                call    PrintArchitecturalPerformanceInformation
+                jz      .incr
+
                 cmp     DWORD[esp],     0xb
-                jz      .c11
-                cmp     DWORD[esp],     0xc
-                jz      .c12
-                cmp     DWORD[esp],     0xd
-                jz      .c13
-                cmp     DWORD[esp],     0xe
-                jz      .c14
-                cmp     DWORD[esp],     0xf
-                jz      .c15
-                cmp     DWORD[esp],     0x10
-                jz      .c16
-                cmp     DWORD[esp],     0x11
-                jz      .c17
-                cmp     DWORD[esp],     0x12
-                jz      .c18
-                cmp     DWORD[esp],     0x13
-                jz      .c19
-                cmp     DWORD[esp],     0x14
-                jz      .c20
+                call    PrintExtendedTopologyEnumInformation
+                jz      .incr
+            
                 cmp     DWORD[esp],     0x15
-                jz      .c21
+                call    PrintTimeStampCounterInformation
+                jz      .incr 
+
                 cmp     DWORD[esp],     0x16
-                jz      .c22
+                call    PrintProcessorFreqInformation
+                jz      .incr 
 
 .incr:
                 pop     ecx
                 inc     ecx
                 jmp     .loop
 
-;//section .rodata
-;//.jmptab:        
-
-;.endloop:      add     esp,    esi
+.endloop:       add     esp,    esi
                 jmp    .return
 
 .few_args:      push    str_too_few_args
